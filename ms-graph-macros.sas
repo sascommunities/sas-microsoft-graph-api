@@ -358,6 +358,7 @@ See:
   %let batchnum = 1;
   data _folderItems0;
    length name $ 500;
+   stop;
   run;
 
   %do %until (%isBlank(%str(&nextLink)));

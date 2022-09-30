@@ -116,6 +116,8 @@ With a valid access token to connect to Microsoft 365, we can now use various me
 
 The flow for file discovery is iterative. Each method creates an output data set that can be queried/filtered to a selection of interest, and that will result in an identifier for a folder or file that feeds into the next method.
 
+### Example: List SharePoint folders files
+
 Here's an example code flow:
 ```
 /* this macro fetches the root IDs for document libraries in your site */
@@ -133,6 +135,11 @@ quit;
 
 /* special macro to pull ALL items from root folder */
 %listFolderItems(driveId=&libraryId., folderId=root, out=work.paths);
+```
+Example output:
+
+![example data set with file listings](./images/example-listings.png)
+```
 
 /* LIST ITEMS IN A SPECIFIC FOLDER */
 
@@ -151,6 +158,28 @@ quit;
 
 /* Pull ALL items from a folder */
 %listFolderItems(driveId=&libraryId., folderId=&folder., out=work.folderItems);
+```
+
+Example output (data set):
+
+![example file listing](./images/example-listings2.png)
+
+### Example: Upload a file from SAS to SharePoint
+
+```
+/* Create a sample file to upload */
+%let targetFile=iris.xlsx;
+filename tosave "%sysfunc(getoption(WORK))/&targetFile.";
+ods excel(id=upload) file=tosave;
+proc print data=sashelp.iris;
+run;
+ods excel(id=upload) close;
+
+/* Upload to the "General" folder, the folder ID from previous step */
+%uploadFile(driveId=&libraryId.,
+  folderId=&folder.,
+  sourcePath=%sysfunc(getoption(WORK)),
+  sourceFilename=&targetFile.);
 ```
 
 Notes:
