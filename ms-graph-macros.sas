@@ -244,7 +244,7 @@ See:
     /* If this is first use for the session, we'll likely need to refresh  */
     /* the token.  This will also call read_token_file again and update */
     /* our token.json file.                                                */
-    %refresh_access_token(token);
+    %refresh_access_token();
   %end;
   filename token clear;
 %mend;
