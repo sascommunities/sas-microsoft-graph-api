@@ -174,7 +174,7 @@ See:
   proc http url="&msloginbase./&tenant_id./oauth2/token"
     method="POST"
     in="%nrstr(&client_id)=&client_id.%nrstr(&refresh_token=)&refresh_token%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&grant_type)=refresh_token%nrstr(&resource)=&resource."
-    out=&outfile.;
+    out=token;
     %if &debug. ge 0 %then
       %do;
         debug level=&debug.;
