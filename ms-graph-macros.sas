@@ -241,12 +241,13 @@ See:
 
     %read_token_file(token);
 
+    filename token clear;
+
     /* If this is first use for the session, we'll likely need to refresh  */
     /* the token.  This will also call read_token_file again and update */
     /* our token.json file.                                                */
     %refresh_access_token();
-  %end;
-  filename token clear;
+  %end;  
 %mend;
 
 /* For SharePoint Online, list the main document libraries in the root of a SharePoint site */
