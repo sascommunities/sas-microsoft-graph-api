@@ -139,7 +139,7 @@ See:
 
   proc http url="&msloginBase./&tenant_id./oauth2/token"
     method="POST"
-    in="%nrstr(&client_id)=&client_id.%nrstr(&code)=&code.%nrstr(&redirect_uri)=&redirect_uri%nrstr(&grant_type)=authorization_code%nrstr(&resource)=&resource."
+    in="%nrstr(&client_id)=&client_id.%nrstr(&code)=&auth_code.%nrstr(&redirect_uri)=&redirect_uri%nrstr(&grant_type)=authorization_code%nrstr(&resource)=&resource."
     out=token;
     %if &debug>=0 %then
       %do;
