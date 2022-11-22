@@ -524,7 +524,7 @@ See:
    /* If a file of the same name exists, we will REPLACE it.                                      */
    /* The API doc says this should be POST, but since we provide a body with conflict directives, */
    /* it seems we must use PUT.                                                                   */
-   proc http url="&msgraphApiBase./me/drives/&driveId./items/&folderId.:/&sourceFilename.:/createUploadSession"
+   proc http url="&msgraphApiBase./me/drives/&driveId./items/&folderId.:/%sysfunc(urlencode(&sourceFilename.)):/createUploadSession"
      method="PUT"
      in='{ "item": {"@microsoft.graph.conflictBehavior": "replace" } }'
      out=resp
@@ -549,7 +549,7 @@ See:
       filename hdrout temp;
       filename resp temp;
    
-      proc http url= "&uploadURL."
+      proc http url= "%superq(uploadURL)"
          method="PUT"
          in=_tosave
          out=resp
