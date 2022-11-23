@@ -351,7 +351,7 @@ See:
 */
 %macro listFolderItems(driveId=, folderId=root, out=work.folderItems); 
 
-  %local nextLink batchnum;
+  %local driveId nextLink batchnum;
 
   /* endpoint for initial list of items */
   %let nextLink = &msgraphApiBase./me/drives/&driveId./items/&folderId./children;

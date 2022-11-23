@@ -116,6 +116,25 @@ With a valid access token to connect to Microsoft 365, we can now use various me
 
 The flow for file discovery is iterative. Each method creates an output data set that can be queried/filtered to a selection of interest, and that will result in an identifier for a folder or file that feeds into the next method.
 
+### Example: List OneDrive contents
+
+This sequence lists your OneDrive "root" drives (you may have more than one), and then lists the contents of the "Documents" drive.
+```
+
+%listMyDrives(out=work.drives);
+
+/* store the ID value for the drive in a macro variable, where "Documents" is at root */
+proc sql noprint;
+ select id into: driveId from work.drives where driveDisplayName="Documents";
+quit;
+
+%listFolderItems(driveId=&driveId, folderId=root, out=work.folderItems);
+```
+
+Example output:
+
+![OneDrive documents with file listings](./images/list-drives-output.png)
+
 ### Example: List SharePoint folders files
 
 Here's an example code flow:
