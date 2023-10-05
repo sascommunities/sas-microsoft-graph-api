@@ -70,7 +70,7 @@ See:
     %put   {;
     %put 	  "tenant_id": "your-azure-tenant",;
     %put 	  "client_id": "your-app-client-id",;
-    %put 	  "redirect_uri": "https://login.microsoftonline.com/common/oauth2/nativeclient",;
+    %put 	  "redirect_uri": "&msloginBase./common/oauth2/nativeclient",;
     %put 	  "resource" : "https://graph.microsoft.com";
     %put   };
   %end;
@@ -86,7 +86,7 @@ See:
   %if %symexist(tenant_id) %then
     %do;
       /* Run this line to build the authorization URL */
-      %let authorize_url=https://login.microsoftonline.com/&tenant_id./oauth2/authorize?client_id=&client_id.%nrstr(&response_type)=code%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&resource)=&resource.;
+      %let authorize_url=&msloginBase./&tenant_id./oauth2/authorize?client_id=&client_id.%nrstr(&response_type)=code%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&resource)=&resource.;
       %let _currLS = %sysfunc(getoption(linesize));
 
       /* LS=MAX so URL will not have line breaks for easier copy/paste */
@@ -464,7 +464,7 @@ See:
   %listFolderItems(driveId=&driveId., folderId=&folderId., out=__tmpLst);
 
   proc sql noprint;
-    select _microsoft_graph_downloadUrl into: dlUrl from folderItems
+    select _microsoft_graph_downloadUrl into: dlUrl TRIMMED from folderItems
       where name="&sourceFilename";
   quit;
 
