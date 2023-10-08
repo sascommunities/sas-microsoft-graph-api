@@ -67,6 +67,15 @@ The macro routines need to know where your config.json and token.json file are l
 %initConfig(configPath=/u/yourId/Projects/ms365);
 ```
 
+### Working with an HTTP proxy
+
+The code in this project uses PROC HTTP without proxy options. If your organization requires a proxy gateway to access the internet, 
+specify the proxy value in the special PROCHTTP_PROXY macro variable:
+```
+%let PROCHTTP_PROXY=proxyhost.company.com:889;
+```
+Add this line before calling any other actions.
+
 ## DO ONCE: Get an auth code
 
 **Note:** you need this step only if you haven't already generated an auth code and stored in token.json. See [Step 2 in this article](https://blogs.sas.com/content/sasdummy/2020/07/09/sas-programming-office-365-onedrive/).
@@ -182,6 +191,29 @@ quit;
 Example output (data set):
 
 ![example file listing](./images/example-listings2.png)
+
+### Example: Download a file from SharePoint to your SAS session
+
+```
+/*
+ With a valid source folderId and knowledge of the items in this folder, 
+ we can download any file of interest.
+
+ This example downloads a file named "ScoreCard2022.xlx" from a known
+ folder on SharePoint (obtained in previous steps) and places it in a
+ file location on the SAS session.
+*/
+%downloadFile(driveId=&driveId., 
+  folderId=&folder., 
+  sourceFilename=ScoreCard2022.xlsx, 
+  destinationPath=/tmp);
+
+/* Downloaded an Excel file into SAS? Now we can PROC IMPORT if we want */
+proc import file="/tmp/ScoreCard2022.xlsx" 
+ out=xldata
+ dbms=xlsx replace;
+run;
+```
 
 ### Example: Upload a file from SAS to SharePoint
 

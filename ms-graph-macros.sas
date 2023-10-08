@@ -111,6 +111,7 @@ See:
   if we need to refresh it.
 */
 %macro read_token_file(file);
+  %put M365: Reading token info from %sysfunc(pathname(&file.));
   libname oauth json fileref=&file.;
 
   data _null_;
@@ -120,6 +121,7 @@ See:
     /* convert epoch value to SAS datetime */
     call symputx('expires_on',(input(expires_on,best32.)+'01jan1970:00:00'dt),'G');
   run;
+  %put M365: Token expires on %left(%qsysfunc(putn(%sysevalf(&expires_on.+%sysfunc(tzoneoff() )),datetime20.)));
 
   libname oauth clear;
 %mend;
@@ -168,7 +170,8 @@ See:
   calls to the MS Graph API service.
 */
 %macro refresh_access_token(debug=0);
-
+ 
+  %put M365: Refreshing access token for M365;
   filename token "&config_root./token.json"; 
 
   proc http url="&msloginbase./&tenant_id./oauth2/token"
@@ -528,6 +531,7 @@ See:
      method="PUT"
      in='{ "item": {"@microsoft.graph.conflictBehavior": "replace" } }'
      out=resp
+     ct="application/json"
      oauth_bearer="&access_token";
    run;
     %put NOTE: Create Upload Session: HTTP result - &SYS_PROCHTTP_STATUS_CODE. &SYS_PROCHTTP_STATUS_PHRASE.; 
