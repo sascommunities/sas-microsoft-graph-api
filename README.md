@@ -238,3 +238,44 @@ Notes:
 * The "list" methods (such as ```listFolderItems```) have special handling to use multiple API calls to gather a complete list of results. The Microsoft Graph API methods return a max of 200 items in a response with an indicator if there are more. These SAS macros will follow through and gather the complete list.
 
 * The ```uploadFile``` method uses the special "large file upload" handling to create an upload session that can accommodate files larger than the 4MB size that is the default size limit.
+
+### Use any Microsoft Graph API endpoint
+
+With the authenticated session established, you can use PROC HTTP to execute any API endpoint that your app permissions allow. 
+For example, with User.Read (most apps have this), you can download your own account profile photo:
+
+```
+filename img "c:/temp/profile.jpg";
+proc http url="&msgraphApiBase./me/photo/$value"
+   method='GET'
+   oauth_bearer="&access_token"
+   out = img;
+run;
+```
+
+The `msgraphApiBase` and `access_token` macro variables are set during ```%initSessionMS365``` macro routine.
+
+This example shows how to retrieve the SharePoint Lists that are defined at the site root. The */sites/root/lists* endpoint requires Sites.Read.All permission.
+
+```
+filename resp temp;
+proc http url="&msgraphApiBase./sites/root/lists"
+   method='GET'
+   oauth_bearer="&access_token"
+   out = resp;
+run;
+
+libname lists JSON fileref=resp;
+proc sql;
+   create table work.list_names as 
+   select t1.name, 
+          t1.displayname, 
+          t1.weburl, 
+          t2.template
+      from lists.value t1
+           inner join lists.value_list t2 on 
+            (t1.ordinal_value = t2.ordinal_list);
+quit;
+```
+
+All APIs are documented in the [Microsoft Graph API reference](https://learn.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0). 

@@ -520,7 +520,7 @@ Sample use:
  chunkLoc=);
 
   %local filesize maxSize numChunks buffsize ;
-  %let buffsize = 4096;
+  %let buffsize = %sysfunc(min(&maxSize,4096));
   %let filesize = %getFileSize(localFile=&sourceFile.);
   %let numChunks = %sysfunc(ceil(%sysevalf( &filesize / &maxSize. )));
   %put NOTE: Splitting &sourceFile. into &numChunks parts;
