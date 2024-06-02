@@ -528,7 +528,7 @@ Sample use:
   %let buffsize = %sysfunc(min(&maxSize,4096));
   %let filesize = %getFileSize(localFile=&sourceFile.);
   %let numChunks = %sysfunc(ceil(%sysevalf( &filesize / &maxSize. )));
-  %put NOTE: Splitting &sourceFile. into &numChunks parts;
+  %put NOTE: Splitting &sourceFile. (size of &filesize. bytes) into &numChunks parts;
 
   %if %isBlank(&chunkLoc.) %then %do;
     %let chunkLoc = %sysfunc(getoption(WORK));
