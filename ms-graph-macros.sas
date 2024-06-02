@@ -672,7 +672,7 @@ Sample use:
    /* it seems we must use PUT.                                                                   */
    proc http url="&msgraphApiBase./me/drives/&driveId./items/&folderId.:/%sysfunc(urlencode(&sourceFilename.)):/createUploadSession"
      method="PUT"
-     in='{ "item": {"@microsoft.graph.conflictBehavior": "replace" }, ,"deferCommit": false }'
+     in='{ "item": {"@microsoft.graph.conflictBehavior": "replace" }, "deferCommit": false }'
      out=resp_us
      ct="application/json"
      oauth_bearer="&access_token";
