@@ -29,7 +29,7 @@ See:
   %let rc=%sysfunc(filename(_lfile,&localFile));
   %if &rc. = 0 %then %do; 
     %let fid=%sysfunc(fopen(&_lfile));
-    %if &fid. = 0 %then %do;
+    %if &fid. > 0 %then %do;
       %let File_Size=%sysfunc(finfo(&fid,File Size (bytes)));
       %let fidc=%sysfunc(fclose(&fid));
     %end;
