@@ -44,19 +44,34 @@ See:
   use of the service.
  
   Reading these from a config.json file so that the values
-  are easy to adapt for different users or projects.
+  are easy to adapt for different users or projects. The config.json
+  can be in a file system or in SAS Content folders (SAS Viya only).
 
   Usage:
     %initConfig(configPath=/path-to-your-config-folder);
+  
+  If using SAS Content folders on SAS Viya, specify the content
+  folder and SASCONTENT=1.
+
+    %initConfig(configPath=/Users/&_clientuserid/My Folder/.creds,sascontent=1);
 
   configPath should contain the config.json for your app.
   This path will also contain token.json once it's generated
   by the authentication steps.
 */
-%macro initConfig(configPath=);
-  %global config_root;
+%macro initConfig(configPath=,sascontent=0);
+  %global config_root m365_usesascontent;
+  %let m365_usesascontent = &sascontent.;
   %let config_root=&configPath.;
-  filename config "&configPath./config.json";
+  %if &m365_usesascontent = 1 %then %do;
+    filename config filesrvc 
+      folderpath="&configPath."
+      filename="config.json";
+  %end;
+  %else %do;
+    filename config "&configPath./config.json";
+  %end;
+  %put NOTE: Establishing Microsoft 365 config root to &config_root.;
   %if (%sysfunc(fexist(config))) %then %do;
     libname config json fileref=config;
     data _null_;
@@ -131,6 +146,20 @@ See:
   libname oauth clear;
 %mend;
 
+/* Assign the TOKEN fileref to location that  */
+/* depends on whether we're using SAS Content */
+%macro assignTokenFileref();
+  %if &m365_usesascontent = 1 %then %do;
+    filename token filesrvc 
+      folderpath="&config_root."
+      filename="token.json";
+  %end;
+  %else %do;
+    filename token "&config_root./token.json";
+  %end;
+%mend;
+
+
 /*
   Utility macro that retrieves the initial access token
   by redeeming the authorization code that you're granted
@@ -142,7 +171,7 @@ See:
 */
 %macro get_access_token(auth_code, debug=0);
 
-  filename token "&config_root./token.json"; 
+   %assignTokenFileref();
 
   proc http url="&msloginBase./&tenant_id./oauth2/token"
     method="POST"
@@ -177,7 +206,7 @@ See:
 %macro refresh_access_token(debug=0);
  
   %put M365: Refreshing access token for M365;
-  filename token "&config_root./token.json"; 
+   %assignTokenFileref();
 
   proc http url="&msloginbase./&tenant_id./oauth2/token"
     method="POST"
@@ -223,7 +252,7 @@ See:
   /*
     Our json file that contains the oauth token information
   */
-  filename token "&config_root./token.json";
+   %assignTokenFileref();
 
   %if (%sysfunc(fexist(token)) eq 0) %then %do;
    %put ERROR: &config_root./token.json not found.  Run the setup steps to create the API tokens.;
