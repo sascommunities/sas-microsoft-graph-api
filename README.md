@@ -32,6 +32,8 @@ These macros use a file named config.json to reference your client app details, 
 
 Designate a secure location for this file and for your token.json file (to be created in a later step). The information within these files is sensitive and specific to you and should be protected. See [How to protect your REST API credentials in SAS programs for guidance](https://blogs.sas.com/content/sasdummy/2018/01/16/hide-rest-api-tokens/).
 
+If you are using SAS Viya, you can optionally create this folder and file in your SAS Content area that is private to you. For example, create a ".creds" folder within "/Users/your.account/My Folder". By default, only your account will be able to read content you place there.
+
 ## Download and include ms-graph-macros.sas code
 
 This repository contains a SAS program (named [ms-graph-macros.sas](./ms-graph-macros.sas)) with all of the macro routines you need for the remaining tasks. Download this file to a local folder and use %INCLUDE to submit in SAS.
@@ -66,6 +68,13 @@ The macro routines need to know where your config.json and token.json file are l
 /* be the location of your token.json */
 %initConfig(configPath=/u/yourId/Projects/ms365);
 ```
+If you are using SAS Viya and you would like to store your config and token files in the SAS Content folders (instead of the file system), this is supported with a boolean flag on ```initConfig```. For example, if you store config.json in a folder named *.creds* within your SAS Content user home, this tells the macro to look in that folder:
+
+```
+%initConfig(configPath=/Users/your.account/My Folder/.creds, sascontent=1);
+```
+
+**Note:** This ```sascontent``` flag is needed to tell the macro to use the FILENAME FILESVC method to access the SAS Content area. It requires a different file access method than traditional file systems.
 
 ### Working with an HTTP proxy
 
@@ -118,6 +127,15 @@ Use the ```%initSessionMS365``` macro routine to exchange the refresh-token stor
 ```
  %initSessionMS365;
 ```
+
+When this is successful, you will see notes similar to these in the SAS log:
+
+```
+M365: Reading token info from token.json
+M365: Token expires on 26JUL2024:10:04:22
+```
+
+The Microsoft Graph API session token is stored in the macro variable ```&access_token```, which is referenced implicitly in the other macro routines in this package.
 
 ## Methods to list content, download files, upload files
 
