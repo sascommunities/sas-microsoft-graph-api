@@ -11,13 +11,29 @@ See:
  https://blogs.sas.com/content/sasdummy/sas-programming-office-365-onedrive
 ----------------------------------------------------------------------------*/
 
-%let msgraphApiBase = https://graph.microsoft.com/v1.0;
-%let msloginBase    = https://login.microsoft.com;
-
 /* Reliable way to check whether a macro value is empty/blank */
 %macro isBlank(param);
   %sysevalf(%superq(param)=,boolean)
 %mend;
+
+/* Check to see if base URLs for services are      */
+/* initialized/overridden.                         */
+/* If not, then define them to the common defaults */
+%macro initBaseUrls();
+ %if %symexist(msloginBase) = 0 %then %do;
+   %global msloginBase;
+ %end; 
+ %if %isBlank(&msloginBase.) %then %do;
+   %let msloginBase = https://login.microsoftonline.com;
+ %end;
+ %if %symexist(msgraphApiBase) = 0 %then %do;
+   %global msgraphApiBase;
+ %end; 
+  %if %isBlank(&msgraphApiBase.) %then %do;
+   %let msgraphApiBase = https://graph.microsoft.com/v1.0;
+ %end;
+%mend;
+%initBaseUrls();
 
 /* We need this function for large file uploads, to telegraph */
 /* the file size in the API.                                   */
