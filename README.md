@@ -51,7 +51,7 @@ If the network rules for your SAS environment block all Internet traffic except 
 
 These macros use a file named config.json to reference your client app details, including the app ID and your Azure tenant ID. The file has this format:
 
-```
+```json
 {
    "tenant_id": "your-azure-tenant",
    "client_id": "your-app-client-id",
@@ -68,13 +68,13 @@ If you are using SAS Viya, you can optionally create this folder and file in you
 
 This repository contains a SAS program (named [ms-graph-macros.sas](./ms-graph-macros.sas)) with all of the macro routines you need for the remaining tasks. Download this file to a local folder and use %INCLUDE to submit in SAS.
 
-```
+```sas
 %let src=<my-local-project>\sas-microsoft-graph-api;
 %include "&src./ms-graph-macros.sas";
 ```
 
 You can also include directly from GitHub:
-```
+```sas
 /* Run just once in your session */
 options dlcreatedir;
 %let repopath=%sysfunc(getoption(WORK))/sas-microsoft-graph-api;
@@ -93,7 +93,7 @@ run;
 
 The macro routines need to know where your config.json and token.json file are located. The ```initConfig``` macro initializes this.
 
-```
+```sas
 /* This path must contain your config.json, and will also */
 /* be the location of your token.json */
 %initConfig(configPath=/u/yourId/Projects/ms365);
@@ -112,7 +112,7 @@ If you are using SAS Viya and you would like to store your config and token file
 
 This helper macro will generate the URL you can use to generate an auth code.
 
-```
+```sas
 %generateAuthUrl();
 ```
 
@@ -123,7 +123,7 @@ The SAS log will contain a URL that you should copy and paste into your browser.
 ## DO ONCE: Generate the first access token
 
 If you just generated your auth code for the first time or needed to get a new one because the old one was revoked or expired, then you need to use the auth code to get an initial access token.
-```
+```sas
 /* Note: this code can be quite long -- 700+ characters. */
 %let auth_code=PASTE-YOUR-AUTH-CODE-HERE;
 
@@ -145,7 +145,7 @@ You should now have both config.json and token.json in your designated config fo
 
 Use the ```%initSessionMS365``` macro routine to exchange the refresh-token stored in token.json for an active non-expired access token.
 
-```
+```sas
  %initSessionMS365;
 ```
 
@@ -167,7 +167,7 @@ The flow for file discovery is iterative. Each method creates an output data set
 ### Example: List OneDrive contents
 
 This sequence lists your OneDrive "root" drives (you may have more than one), and then lists the contents of the "Documents" drive.
-```
+```sas
 
 %listMyDrives(out=work.drives);
 
@@ -186,7 +186,7 @@ Example output:
 ### Example: List SharePoint folders files
 
 Here's an example code flow:
-```
+```sas
 /* this macro fetches the root IDs for document libraries in your site */
 %listSiteLibraries(
  siteHost=mysite.sharepoint.com,
@@ -206,7 +206,7 @@ quit;
 Example output:
 
 ![example data set with file listings](./images/example-listings.png)
-```
+```sas
 
 /* LIST ITEMS IN A SPECIFIC FOLDER */
 
@@ -233,7 +233,7 @@ Example output (data set):
 
 ### Example: Download a file from SharePoint to your SAS session
 
-```
+```sas
 /*
  With a valid source folderId and knowledge of the items in this folder, 
  we can download any file of interest.
@@ -256,7 +256,7 @@ run;
 
 ### Example: Upload a file from SAS to SharePoint
 
-```
+```sas
 /* Create a sample file to upload */
 %let targetFile=iris.xlsx;
 filename tosave "%sysfunc(getoption(WORK))/&targetFile.";
@@ -283,7 +283,7 @@ Notes:
 With the authenticated session established, you can use PROC HTTP to execute any API endpoint that your app permissions allow. 
 For example, with User.Read (most apps have this), you can download your own account profile photo:
 
-```
+```sas
 filename img "c:/temp/profile.jpg";
 proc http url="&msgraphApiBase./me/photo/$value"
    method='GET'
@@ -296,7 +296,7 @@ The `msgraphApiBase` and `access_token` macro variables are set during ```%initS
 
 This example shows how to retrieve the SharePoint Lists that are defined at the site root. The */sites/root/lists* endpoint requires Sites.Read.All permission.
 
-```
+```sas
 filename resp temp;
 proc http url="&msgraphApiBase./sites/root/lists"
    method='GET'
