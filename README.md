@@ -17,11 +17,15 @@ project to get an access token and invoke API methods to accomplish tasks such a
 For more guidance about how to register a client app for use with the Microsoft Graph API,
 see [Using SAS with Microsoft 365](https://blogs.sas.com/content/sasdummy/2020/07/09/sas-programming-office-365-onedrive/). 
 
-## Working with a firewall: Preparing your environment
+**Watch**: [Demo: SAS Viya Workbench and SAS code to access Microsoft 365](https://communities.sas.com/t5/SAS-Viya-Workbench-Getting/Demo-SAS-Viya-Workbench-and-SAS-code-to-access-Microsoft-365/ta-p/952476) -- see this macro library in action. Note that these macros work from any SAS environment: PC SAS, SAS Enterprise Guide, SAS 9 and SAS Viya. 
+
+## Working within a firewall: Preparing your environment
 
 These methods use APIs from Microsoft to access your Microsoft 365 content. Microsoft 365 services are hosted in the cloud by Microsoft, and so your SAS session needs to be able to access these Internet services.
 
 If your SAS session is in a hosted environment or running behind a firewall that does not have direct access to the Internet, you need to perform a few additional steps to enable these methods.
+
+**Read:** [How to test PROC HTTP and Internet access in your environment](https://blogs.sas.com/content/sasdummy/2018/01/23/check-json-and-http/)
 
 ### Working with an HTTP proxy
 
