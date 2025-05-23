@@ -17,6 +17,32 @@ project to get an access token and invoke API methods to accomplish tasks such a
 For more guidance about how to register a client app for use with the Microsoft Graph API,
 see [Using SAS with Microsoft 365](https://blogs.sas.com/content/sasdummy/2020/07/09/sas-programming-office-365-onedrive/). 
 
+## Working with a firewall: Preparing your environment
+
+These methods use APIs from Microsoft to access your Microsoft 365 content. Microsoft 365 services are hosted in the cloud by Microsoft, and so your SAS session needs to be able to access these Internet services.
+
+If your SAS session is in a hosted environment or running behind a firewall that does not have direct access to the Internet, you need to perform a few additional steps to enable these methods.
+
+### Working with an HTTP proxy
+
+The code in this project uses PROC HTTP without proxy options. If your organization requires a proxy gateway to access the internet, 
+specify the proxy value in the [special PROCHTTP_PROXY macro variable](https://go.documentation.sas.com/doc/en/pgmsascdc/v_063/proc/p0m87fzxykv1vyn14rftls0mbrkm.htm):
+```
+%let PROCHTTP_PROXY=proxyhost.company.com:889;
+```
+Add this line before calling any other actions. PROC HTTP will apply this proxy value for all methods.
+
+### Modify the Allow List (whitelist) for Microsoft 365 endpoints
+
+If the network rules for your SAS environment block all Internet traffic except for endpoints or IP addresses that are explicitly permitted, then you will need to add at least the following endpoints to the allow list (_whitelist_).
+
+* `login.microsoftonline.com` - for authentication and token refresh
+* `graph.microsoft.com` - for API calls to the Microsoft Graph API
+* _your-tenant-site_`.sharepoint.com` - for downloadable files from your SharePoint and Teams sites. Example: `contoso.sharepoint.com`.
+* _your-tenant-site_`-my.sharepoint.com` - for OneDrive files folders (those with /personal in the path). Example: `contoso-my.sharepoint.com` The naming convention may vary, so check how your organization differentiates Teams and SharePoints site from OneDrive locations.
+
+**Note:** Micrososoft [publishes a complete list of IP ranges](https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?view=o365-worldwide) to enable Microsoft 365 clients within a firewall, but the list is extensive and only a subset of these are needed for most SAS use cases.
+
 ## Create the config.json file with your client app details
 
 These macros use a file named config.json to reference your client app details, including the app ID and your Azure tenant ID. The file has this format:
@@ -75,15 +101,6 @@ If you are using SAS Viya and you would like to store your config and token file
 ```
 
 **Note:** This ```sascontent``` flag is needed to tell the macro to use the FILENAME FILESVC method to access the SAS Content area. It requires a different file access method than traditional file systems.
-
-### Working with an HTTP proxy
-
-The code in this project uses PROC HTTP without proxy options. If your organization requires a proxy gateway to access the internet, 
-specify the proxy value in the special PROCHTTP_PROXY macro variable:
-```
-%let PROCHTTP_PROXY=proxyhost.company.com:889;
-```
-Add this line before calling any other actions.
 
 ## DO ONCE: Get an auth code
 
