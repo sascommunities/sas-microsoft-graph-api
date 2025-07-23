@@ -1,4 +1,4 @@
-/* --------------------------------------------------------------------------
+﻿/* --------------------------------------------------------------------------
  Macros for managing the access tokens for the  MS Graph API. 
  Also helpful macros for discovering,  downloading/reading, and uploading 
  file content to OneDrive and SharePoint Online.
@@ -148,18 +148,24 @@ See:
 */
 %macro read_token_file(file);
   %put M365: Reading token info from %sysfunc(pathname(&file.));
-  libname oauth json fileref=&file.;
 
-  data _null_;
-    set oauth.root;
-    call symputx('access_token', access_token,'G');
-    call symputx('refresh_token', refresh_token,'G');
-    /* convert epoch value to SAS datetime */
-    call symputx('expires_on',(input(expires_on,best32.)+'01jan1970:00:00'dt),'G');
-  run;
-  %put M365: Token expires on %left(%qsysfunc(putn(%sysevalf(&expires_on.+%sysfunc(tzoneoff() )),datetime20.)));
+  %if %sysfunc(fexist(&file.)) %then %do;
+    libname oauth json fileref=&file.;
 
-  libname oauth clear;
+    data _null_;
+      set oauth.root;
+      call symputx('access_token', access_token,'G');
+      call symputx('refresh_token', refresh_token,'G');
+      /* convert epoch value to SAS datetime */
+      call symputx('expires_on',(input(expires_on,best32.)+'01jan1970:00:00'dt),'G');
+    run;
+    %put M365: Token expires on %left(%qsysfunc(putn(%sysevalf(&expires_on.+%sysfunc(tzoneoff() )),datetime20.)));
+
+    libname oauth clear;
+  %end;
+  %else %do;
+    %put ERROR: token.json file does not exist.;
+  %end;
 %mend;
 
 /* Assign the TOKEN fileref to location that  */
@@ -187,17 +193,17 @@ See:
 */
 %macro get_access_token(auth_code, debug=0);
 
-   %assignTokenFileref();
+  %assignTokenFileref();
 
   proc http url="&msloginBase./&tenant_id./oauth2/token"
     method="POST"
     in="%nrstr(&client_id)=&client_id.%nrstr(&code)=&auth_code.%nrstr(&redirect_uri)=&redirect_uri%nrstr(&grant_type)=authorization_code%nrstr(&resource)=&resource."
     out=token;
-    %if &debug>=0 %then
+    %if %sysevalf(&debug.) > 0 %then
       %do;
         debug level=&debug.;
       %end;
-    %else %if &_DEBUG_. ge 1 %then
+    %else %if %sysevalf(&_DEBUG_.) > 1 %then
       %do;
         debug level=&_DEBUG_.;
       %end;
@@ -208,6 +214,11 @@ See:
   %end;
   %else %do; 
    %put ERROR: &sysmacroname. failed: HTTP result - &SYS_PROCHTTP_STATUS_CODE. &SYS_PROCHTTP_STATUS_PHRASE.; 
+   %if %sysfunc(fexist(token)) %then %do;
+     data _null_;
+      rc=jsonpp('token','log');
+     run;
+   %end;
   %end;
 
   filename token clear;
@@ -228,11 +239,11 @@ See:
     method="POST"
     in="%nrstr(&client_id)=&client_id.%nrstr(&refresh_token=)&refresh_token%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&grant_type)=refresh_token%nrstr(&resource)=&resource."
     out=token;
-    %if &debug. ge 0 %then
+    %if %sysevalf(&debug.) > 0 %then
       %do;
         debug level=&debug.;
       %end;
-    %else %if %symexist(_DEBUG_) AND &_DEBUG_. ge 1 %then
+    %else %if %sysevalf(&_DEBUG_.) > 1 %then
       %do;
         debug level=&_DEBUG_.;
       %end;
@@ -243,6 +254,11 @@ See:
   %end;
   %else %do; 
    %put ERROR: &sysmacroname. failed: HTTP result - &SYS_PROCHTTP_STATUS_CODE. &SYS_PROCHTTP_STATUS_PHRASE.; 
+   %if %sysfunc(fexist(token)) %then %do;
+     data _null_;
+      rc=jsonpp('token','log');
+     run;
+   %end;
   %end;
 
   filename token clear;

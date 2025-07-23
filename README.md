@@ -45,7 +45,28 @@ If the network rules for your SAS environment block all Internet traffic except 
 * _your-tenant-site_`.sharepoint.com` - for downloadable files from your SharePoint and Teams sites. Example: `contoso.sharepoint.com`.
 * _your-tenant-site_`-my.sharepoint.com` - for OneDrive files folders (those with /personal in the path). Example: `contoso-my.sharepoint.com` The naming convention may vary, so check how your organization differentiates Teams and SharePoints site from OneDrive locations.
 
-**Note:** Micrososoft [publishes a complete list of IP ranges](https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?view=o365-worldwide) to enable Microsoft 365 clients within a firewall, but the list is extensive and only a subset of these are needed for most SAS use cases.
+> **Note:** Micrososoft [publishes a complete list of IP ranges](https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?view=o365-worldwide) to enable Microsoft 365 clients within a firewall, but the list is extensive and only a subset of these are needed for most SAS use cases.
+
+## Using Microsoft 365 in an Azure Government Tenant
+
+Microsoft provides an Azure government service for US Federal, State, and government partner/contractor organizations. If this applies to your tenant, your login and API URLs may be slightly different. For example, instead of `https://login.microsoftonline.com` you might use `https://login.microsoftonline.us`. (Note the **.us** as the domain suffix.)
+
+This macro library uses the default endpoints for commercial tenants, but you can override these by assigning the following macro variables **before** you load/run this macro library.
+
+These are the default values:
+```sas
+%let msloginBase    = https://login.microsoftonline.com;
+%let msgraphApiBase = https://graph.microsoft.com/v1.0;
+```
+
+These are *examples* of how you might change them for use with a government tenant. Confirm with your IT or tenant support contacts before making this change.
+
+```sas
+%let msloginBase    = https://login.microsoftonline.us;
+%let msgraphApiBase = https://graph.microsoft.us/v1.0;
+```
+
+If you are running SAS in a hosted environment with firewall rules that control network traffic, be sure to add these URLs to the allow-list. (See previous section about working within a firewall.)
 
 ## Create the config.json file with your client app details
 
@@ -59,6 +80,7 @@ These macros use a file named config.json to reference your client app details, 
    "resource" : "https://graph.microsoft.com"
 }
 ```
+> **NOTE:** Working in an Azure Government tenant? See previous section for guidance on how the redirect_uri and resource URL value might need to change.
 
 Designate a secure location for this file and for your token.json file (to be created in a later step). The information within these files is sensitive and specific to you and should be protected. See [How to protect your REST API credentials in SAS programs for guidance](https://blogs.sas.com/content/sasdummy/2018/01/16/hide-rest-api-tokens/).
 
@@ -104,11 +126,11 @@ If you are using SAS Viya and you would like to store your config and token file
 %initConfig(configPath=/Users/your.account/My Folder/.creds, sascontent=1);
 ```
 
-**Note:** This ```sascontent``` flag is needed to tell the macro to use the FILENAME FILESVC method to access the SAS Content area. It requires a different file access method than traditional file systems.
+> **Note:** This ```sascontent``` flag is needed to tell the macro to use the FILENAME FILESVC method to access the SAS Content area. It requires a different file access method than traditional file systems.
 
 ## DO ONCE: Get an auth code
 
-**Note:** you need this step only if you haven't already generated an auth code and stored in token.json. See [Step 2 in this article](https://blogs.sas.com/content/sasdummy/2020/07/09/sas-programming-office-365-onedrive/).
+> **Note:** you need this step only if you haven't already generated an auth code and stored in token.json. See [Step 2 in this article](https://blogs.sas.com/content/sasdummy/2020/07/09/sas-programming-office-365-onedrive/).
 
 This helper macro will generate the URL you can use to generate an auth code.
 
