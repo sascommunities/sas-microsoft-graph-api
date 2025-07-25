@@ -203,9 +203,12 @@ See:
       %do;
         debug level=&debug.;
       %end;
-    %else %if %sysevalf(&_DEBUG_.) > 1 %then
+    %else %if %symexist(_DEBUG_) ^= 0 %then 
       %do;
-        debug level=&_DEBUG_.;
+        %if %sysevalf(&_DEBUG_.) > 1 %then
+        %do;
+          debug level=&_DEBUG_.;
+        %end;
       %end;
   run;
 
@@ -243,9 +246,12 @@ See:
       %do;
         debug level=&debug.;
       %end;
-    %else %if %sysevalf(&_DEBUG_.) > 1 %then
+    %else %if %symexist(_DEBUG_) ^= 0 %then 
       %do;
-        debug level=&_DEBUG_.;
+        %if %sysevalf(&_DEBUG_.) > 1 %then
+        %do;
+          debug level=&_DEBUG_.;
+        %end;
       %end;
   run;
 
