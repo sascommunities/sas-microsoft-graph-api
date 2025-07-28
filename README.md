@@ -205,6 +205,30 @@ Example output:
 
 ![OneDrive documents with file listings](./images/list-drives-output.png)
 
+#### Alternate approach using Site and Path
+
+OneDrive site domain is _usually_ a variation of the SharePoint site domain with a `-my` suffix (example: `mysite-my.sharepoint.com`). Instead of starting with `%listMyDrives` you can use `%listSiteLibraries`:
+
+```sas
+/* this macro fetches the root of your OneDrive. /personal/path name convention may differ for your site */
+%listSiteLibraries(
+ siteHost=mysite-my.sharepoint.com,
+ sitePath=/personal/firstname_lastname_company_com,
+ out=libraries);
+
+/* store the ID value for the library in a macro variable, where "OneDrive" is at root */
+proc sql noprint;
+ select id into: libraryId from libraries where name="OneDrive";
+quit;
+
+/* LIST TOP LEVEL FOLDERS/FILES */
+
+/* special macro to pull ALL items from root folder */
+%listFolderItems(driveId=&libraryId., folderId=root, out=work.paths);
+```
+
+The advantage of this method is it's consistent with how you access folders and files on SharePoint or Teams (described in the next section).
+
 ### Example: List SharePoint folders files
 
 Here's an example code flow:
@@ -340,3 +364,12 @@ quit;
 ```
 
 All APIs are documented in the [Microsoft Graph API reference](https://learn.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0). 
+
+## Troubleshooting
+
+There are several moving parts when using these macros to access your Microsoft 365 content. Once you get it working, it's a beautiful thing. Here are some of the stumbling blocks you might face with some tips for how to fix them.
+
+* Make sure that the application ID and tenant ID are correct in the config.json file. Your IT support staff should be able to provide these, but you can find them yourself by visiting the Azure Portal (usually `portal.azure.com`). For the tenant ID, navigate to **Microsoft Entra ID** and look at the Overview tab. The Tenant ID should be front-and-center with a button to copy it to your clipboard.
+* Make sure your application has the correct delegated permissions. For most use cases you will need **Files.ReadWrite.All** and **Sites.ReadWrite.All**.
+* Make sure that your SAS environment (where you are running the code that uses these macros) has access to the Internet, and specifically the endpoints needed for these APIs to work. (See the section about Firewalls earlier in this document.)
+* If you're seeing HTTP errors when running the macros, set `%let _DEBUG=3;` to enable more debugging output in the SAS log. This will show you the full content of each PROC HTTP request and response when getting and refreshing the access token. The additional information might help determine where the problem is.
