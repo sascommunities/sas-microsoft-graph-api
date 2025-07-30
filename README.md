@@ -374,7 +374,38 @@ All APIs are documented in the [Microsoft Graph API reference](https://learn.mic
 
 ## Troubleshooting
 
-There are several moving parts when using these macros to access your Microsoft 365 content. Once you get it working, it's a beautiful thing. Here are some of the stumbling blocks you might face with some tips for how to fix them.
+There are several moving parts when using these macros to access your Microsoft 365 content. Once you get it working, it's a beautiful thing. 
+
+### Using the test script to verify your setup
+
+This project includes a PowerShell test script that you can use to verify that your application is configured correctly. Run this script on a Windows desktop from a PowerShell command terminal.
+
+If you use this script and are not able to complete a successful API call, then it's not likely to work from your SAS environment either. Doing the work to pass this test can save frustration later.
+
+The script is here:
+
+> [ms-graph-api-test.ps1](./examples/ms-graph-api-test.ps1)
+
+Example usage:
+
+```
+./ms-graph-api-test.ps1 -ConfigPath c:\Projects\MS365\config.json
+```
+
+where `config.json` is an existing file that is formatted exactly as described earlier in this documentation, with your tenant ID, application (client) ID, etc.
+
+The script will launch a browser session to authenticate to your Microsoft 365 environment and generate an access code. It **may** display a consent prompt to access your app. When complete, copy the _complete_ resulting URL from the browser address window and paste into the PowerShell command console as prompted.
+
+If the test is successful, you will see two resultls:
+
+* The output of the /me API call will be displayed in your PowerShell command console, verifying that you can successfully call the Microsoft Graph API.
+* A new `token.json` file will be created in the same path as your `config.json` file. You can actually use this token file as-is, and copy it to your SAS environment in the same secure location as `config.json`. When you use the macros to `%initSessionMS365;`, the process will read the refresh token and use it to get an active access token.
+
+If things don't work and you see errors, you'll have some troubleshooting steps to follow.
+
+### Other things to check
+
+Here are some of the stumbling blocks you might face with some tips for how to fix them.
 
 * Make sure that the application ID and tenant ID are correct in the config.json file. Your IT support staff should be able to provide these, but you can find them yourself by visiting the Azure Portal (usually `portal.azure.com`). For the tenant ID, navigate to **Microsoft Entra ID** and look at the Overview tab. The Tenant ID should be front-and-center with a button to copy it to your clipboard.
 * Make sure your application has the correct delegated permissions. For most use cases you will need **Files.ReadWrite.All** and **Sites.ReadWrite.All**.
