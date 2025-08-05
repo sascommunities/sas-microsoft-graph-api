@@ -69,7 +69,8 @@ $tokenResponse = Invoke-RestMethod -Method Post -Uri $tokenEndpoint -Body @{
     code          = $authCode
     redirect_uri  = $redirectUri
     grant_type    = "authorization_code"
-    resource     = $resource
+    resource      = $resource
+    prompt        = "none"
 } -ContentType "application/x-www-form-urlencoded"
 
 if (-not $tokenResponse.access_token) {
