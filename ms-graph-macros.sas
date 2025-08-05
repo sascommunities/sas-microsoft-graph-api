@@ -197,7 +197,7 @@ See:
 
   proc http url="&msloginBase./&tenant_id./oauth2/token"
     method="POST"
-    in="%nrstr(&client_id)=&client_id.%nrstr(&code)=&auth_code.%nrstr(&redirect_uri)=&redirect_uri%nrstr(&grant_type)=authorization_code%nrstr(&resource)=&resource."
+    in="%nrstr(&client_id)=&client_id.%nrstr(&code)=&auth_code.%nrstr(&redirect_uri)=&redirect_uri%nrstr(&grant_type)=authorization_code%nrstr(&resource)=&resource.%nrstr(&prompt)=none"
     out=token;
     %if %sysevalf(&debug.) > 0 %then
       %do;
@@ -240,7 +240,7 @@ See:
 
   proc http url="&msloginbase./&tenant_id./oauth2/token"
     method="POST"
-    in="%nrstr(&client_id)=&client_id.%nrstr(&refresh_token=)&refresh_token%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&grant_type)=refresh_token%nrstr(&resource)=&resource."
+    in="%nrstr(&client_id)=&client_id.%nrstr(&refresh_token=)&refresh_token%nrstr(&redirect_uri)=&redirect_uri.%nrstr(&grant_type)=refresh_token%nrstr(&resource)=&resource.%nrstr(&prompt)=none"
     out=token;
     %if %sysevalf(&debug.) > 0 %then
       %do;
