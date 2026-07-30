@@ -76,17 +76,23 @@ See:
   This path will also contain token.json once it's generated
   by the authentication steps.
 */
-%macro initConfig(configPath=,sascontent=0);
-  %global config_root m365_usesascontent;
+%macro initConfig(configPath=,configFilename=config.json, sascontent=0);
+  %global config_root m365_usesascontent auth_endpoint me_endpoint;
+
+  /* These may be overridden later if using client_secret or device code auth */
+  %let auth_endpoint = oauth2/token;
+  %let me_endpoint = /me;
+
   %let m365_usesascontent = &sascontent.;
   %let config_root=&configPath.;
+
   %if &m365_usesascontent = 1 %then %do;
     filename config filesrvc 
       folderpath="&configPath."
-      filename="config.json";
+      filename="&configFilename";
   %end;
   %else %do;
-    filename config "&configPath./config.json";
+    filename config "&configPath./&configFilename";
   %end;
   %put NOTE: Establishing Microsoft 365 config root to &config_root.;
   %if (%sysfunc(fexist(config))) %then %do;
@@ -108,6 +114,8 @@ See:
     %if not %isBlank(&client_secret.) %then %do;
       %put NOTE: Detected client_secret. All operations will use client_secret for authentication.;
       %put NOTE: No interactive authentication will be required.;
+      %let auth_endpoint = oauth2/v2.0/token;
+      %let me_endpoint =;      
     %end;
 
     libname config clear;
@@ -326,15 +334,22 @@ See:
   %if %sysfunc(fexist(&file.)) %then %do;
     libname oauth json fileref=&file.;
 
+    %let fid = %sysfunc(fopen(&file.));
+    %let last_modified = %sysfunc(finfo(&fid, Last Modified));
+    %let rc = %sysfunc(fclose(&fid));
+        
     data _null_;
       set oauth.root;
       call symputx('access_token', access_token,'G');
       if NOT missing(refresh_token) then call symputx('refresh_token', refresh_token,'G');      
 
-      /* convert epoch value to SAS datetime */
-      call symputx('expires_on',(input(expires_on,best32.)+'01jan1970:00:00'dt),'G');
+      /* convert epoch value to SAS datetime or if using a client secret, add to the last modified of the file */
+      if NOT missing(expires_on) then _expire_datetime = input(expires_on,best32.)+'01jan1970:00:00'dt + tzoneoff();
+          else _expire_datetime = input("&last_modified", datetime20.) + expires_in;
+
+        call symputx('expires_on',_expire_datetime,'G');
     run;
-    %put M365: Token expires on %left(%qsysfunc(putn(%sysevalf(&expires_on.+%sysfunc(tzoneoff() )),datetime20.)));
+    %put M365: Token expires on %left(%sysfunc(putn(&expires_on, datetime20.)));
 
     libname oauth clear;
   %end;
@@ -380,6 +395,7 @@ See:
         "resource"     = "&resource"
         "prompt"       = "none"
     ;
+
   %end;
   
   %else %if NOT %isBlank(&client_secret) %then %do;
@@ -388,13 +404,14 @@ See:
         "scope"         = "https://graph.microsoft.com/.default"
         "grant_type"    = "client_credentials"
     ;
+
   %end;
   %else %do;
     %put ERROR: You must provide either an auth_code or a client_secret.;
     %return;
   %end;
 
-  proc http url="&msloginBase./&tenant_id./oauth2/token"
+  proc http url="&msloginBase./&tenant_id./&auth_endpoint"
     method="POST"
     in=form("client_id"="&client_id" &payload)
     out=token;
@@ -431,9 +448,11 @@ See:
   Utility macro to redeem the refresh token 
   and get a new access token for use in subsequent
   calls to the MS Graph API service.
+
+  Used only for user auth tokens, not client_credential/secret
 */
 %macro refresh_access_token(debug=0);
- 
+
   options noquotelenmax;
   
   %put M365: Refreshing access token for M365;
@@ -506,45 +525,45 @@ See:
     %end;   
   %else %do;
 
-  /*
-    Our json file that contains the oauth token information
-  */
-    
-   %assignTokenFileref();
-
-  %if (%sysfunc(fexist(token)) eq 0) %then %do;
-   %put ERROR: &config_root./token.json not found.  Run the setup steps to create the API tokens.;
-  %end;
-  %else %do;
     /*
-    If the access_token expires, we can just use the refresh token to get a new one.
-
-    Some reasons the token (and refresh token) might not work:
-      - Explicitly revoked by the app developer or admin
-      - Password change in the user account for Microsoft Office 365
-      - Time limit expiration
-
-    Basically from this point on, user interaction is not needed.
-
-    We assume that the token will only need to be refreshed once per session, 
-    and right at the beginning of the session. 
-
-    If a long running session is needed (>3600 seconds), 
-    then check API calls for a 401 return code
-    and call %refresh_access_token if needed.
+      Our json file that contains the oauth token information
     */
+    
+    %assignTokenFileref();
 
-        %read_token_file(token);
+    %if (%sysfunc(fexist(token)) eq 0) %then %do;
+      %put ERROR: &config_root./token.json not found.  Run the setup steps to create the API tokens.;
+    %end;
+    %else %do;
+      /*
+      If the access_token expires, we can just use the refresh token to get a new one.
 
-        filename token clear;
+      Some reasons the token (and refresh token) might not work:
+        - Explicitly revoked by the app developer or admin
+        - Password change in the user account for Microsoft Office 365
+        - Time limit expiration
 
-        /* If this is first use for the session, we'll likely need to refresh  */
-        /* the token.  This will also call read_token_file again and update    */
+      Basically from this point on, user interaction is not needed.
+
+      We assume that the token will only need to be refreshed once per session, 
+      and right at the beginning of the session. 
+
+      If a long running session is needed (>3600 seconds), 
+      then check API calls for a 401 return code
+      and call %refresh_access_token if needed.
+      */
+
+          %read_token_file(token);
+
+          filename token clear;
+
+          /* If this is first use for the session, we'll likely need to refresh  */
+          /* the token.  This will also call read_token_file again and update    */
           /* our token.json file. */
 
-                %refresh_access_token();
-            %end; 
-    %end;
+          %refresh_access_token();
+      %end;
+  %end;
 %mend;
 
 /* For SharePoint Online, list the main document libraries in the root of a SharePoint site */
@@ -602,8 +621,12 @@ See:
    %listMyDrives(out=work.DriveData);
 */
 %macro listMyDrives(out=work.drives);
+  %if %isBlank(&me_endpoint) %then %do;
+   %put ERROR: listMyDrives is supported only with delegated access (user auth token), not client_secret.;
+   %return;
+  %end;
   filename resp TEMP;
-  proc http url="&msgraphApiBase./me/drives/"
+  proc http url="&msgraphApiBase.&me_endpoint/drives/"
        oauth_bearer="&access_token"
        out = resp;
   	 run;
@@ -651,7 +674,7 @@ See:
   %local driveId nextLink batchnum;
 
   /* endpoint for initial list of items */
-  %let nextLink = &msgraphApiBase./me/drives/&driveId./items/&folderId./children;
+  %let nextLink = &msgraphApiBase.&me_endpoint/drives/&driveId./items/&folderId./children;
   %let batchnum = 1;
   data _folderItems0;
    length name $ 500;
@@ -871,7 +894,7 @@ See:
   data _null_;
    set work._tmpPaths(where=(isFolder=0));
    put "Processing " name;
-   call execute(catt('%nrstr(%getFileSensitivityLabel(driveId=%superq(libraryId),itemId=',id,',out=work._outSens',_n_,'));'));
+   call execute(catt('%nrstr(%getFileSensitivityLabel(driveId=%superq(driveId),itemId=',id,',out=work._outSens',_n_,'));'));
   run;
 
   /* Combine all to one output */
@@ -1103,7 +1126,7 @@ Sample use:
    /* If a file of the same name exists, we will REPLACE it.                                      */
    /* The API doc says this should be POST, but since we provide a body with conflict directives, */
    /* it seems we must use PUT.                                                                   */
-   proc http url="&msgraphApiBase./me/drives/&driveId./items/&folderId.:/%sysfunc(urlencode(&sourceFilename.)):/createUploadSession"
+   proc http url="&msgraphApiBase.&me_endpoint/drives/&driveId./items/&folderId.:/%sysfunc(urlencode(&sourceFilename.)):/createUploadSession"
      method="PUT"
      in='{ 
             "item": {"@microsoft.graph.conflictBehavior": "replace"}, 
