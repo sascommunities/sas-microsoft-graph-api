@@ -7,7 +7,7 @@ SharePoint Online (including content in Microsoft Teams).
 To use SAS or any scripting language with Microsoft 365, you must first register a 
 client app, and either:
 1. Authenticate with your identity to grant it permissions, and obtain an authorization code
-2. Authenticate with a client secret with appliation permissions to read/write to a site
+2. Authenticate with a client secret with application permissions to read/write to a site
 
 With the auth code or client secret in hand, you can then use the code routines in this
 project to get an access token and invoke API methods to accomplish tasks such as:
@@ -48,6 +48,28 @@ By creating a client secret within Entra for your application and granting it th
 > 
 > After administrator consent is granted, the application must be explicitly granted access to each SharePoint site, document library, file, or folder that it needs to access.
 
+### How to add a resource grant for your app
+
+Once an client-credential style app is approved, an administrator or authorized user can add "resource grants" to allow it to access and take actions in approved, scoped areas. To add these resource grants, use the /permissions endpoint in the Microsoft Graph API.
+
+For example, to add a permission for your approved app to write/update content in a specific SharePoint site, use an API call like this:
+
+```
+POST https://graph.microsoft.com/v1.0/sites/yourorg.sharepoint.com:/sites/SASandMicrosoft365APIdemo:/permissions
+
+{
+  "roles": ["write"],
+  "grantedToIdentities": [{
+    "application": {
+      "id": "6930c6ea-640a-4723-9088-657631c6043c",
+      "displayName": "SAS Connect to Sharepoint (Client Auth)"
+    }
+  }]
+}
+```
+
+An authorized user with correct privileges can add this grant using the [Microsoft Graph Explorer application](https://developer.microsoft.com/en-us/graph/graph-explorer). See the [Microsoft Graph API documentation for more information about adding permissions](https://learn.microsoft.com/en-us/graph/api/site-post-permissions?view=graph-rest-1.0&tabs=http) to SharePoint sites.
+
 ## Working within a firewall: Preparing your environment
 
 These methods use APIs from Microsoft to access your Microsoft 365 content. Microsoft 365 services are hosted in the cloud by Microsoft, and so your SAS session needs to be able to access these Internet services.
@@ -74,7 +96,7 @@ If the network rules for your SAS environment block all Internet traffic except 
 * _your-tenant-site_`.sharepoint.com` - for downloadable files from your SharePoint and Teams sites. Example: `contoso.sharepoint.com`.
 * _your-tenant-site_`-my.sharepoint.com` - for OneDrive files folders (those with /personal in the path). Example: `contoso-my.sharepoint.com` The naming convention may vary, so check how your organization differentiates Teams and SharePoints site from OneDrive locations.
 
-> **Note:** Micrososoft [publishes a complete list of IP ranges](https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?view=o365-worldwide) to enable Microsoft 365 clients within a firewall, but the list is extensive and only a subset of these are needed for most SAS use cases.
+> **Note:** Microsoft [publishes a complete list of IP ranges](https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?view=o365-worldwide) to enable Microsoft 365 clients within a firewall, but the list is extensive and only a subset of these are needed for most SAS use cases.
 
 ## Using Microsoft 365 in an Azure Government Tenant
 
@@ -215,7 +237,7 @@ The SAS log will contain a URL that you should copy and paste into your browser.
 
 ![authcode in URL](./images/azure_access_code.png)
 
-> **NOTE**: Recent changes in Auth Code flow can make this process more difficult. See the **Troublshooting** section later in this document for an alternative approach that uses Device Code flow. This project also includes PowerShell scripts that can help you test and obtain your first aaccess token.
+> **NOTE**: Recent changes in Auth Code flow can make this process more difficult. See the **Troubleshooting** section later in this document for an alternative approach that uses Device Code flow. This project also includes PowerShell scripts that can help you test and obtain your first access token.
 
 ### Auth Code: Generate the first access token
 
@@ -493,7 +515,7 @@ If you use these scripts and are not able to complete a successful API call, the
 
 There are two scripts: one for auth code flow and one for device code flow.
 
-#### Auth Code Flow: msgraph-authcode-flow.psl
+#### Auth Code Flow: msgraph-authcode-flow.ps1
 
 Note that the Auth Code flow has changed recently, resulting in a potentially confusing message about "phishing", and also a redirect action that makes it more difficult to capture the auth code. If you encounter this and can't get past it, you should consider trying the Device Code auth flow (described in the next section).
 
@@ -511,7 +533,7 @@ where `config.json` is an existing file that is formatted exactly as described e
 
 The script will launch a browser session to authenticate to your Microsoft 365 environment and generate an access code. It **may** display a consent prompt to access your app. When complete, copy the _complete_ resulting URL from the browser address window and paste into the PowerShell command console as prompted.
 
-#### Device Code Flow: msgraph-deviceauth-flow.psl
+#### Device Code Flow: msgraph-deviceauth-flow.ps1
 
 The Device Code flow will feel familiar to anyone who has connected a third-party service to a device, for example connecting a streaming service to your smart TV. The mechanism is the same.
 
